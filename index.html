@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Pages Animation Test</title>
+    <style>body { margin: 0; background: #111; overflow: hidden; }</style>
+</head>
+<body>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com",
+                "three/addons/": "https://unpkg.com"
+            }
+        }
+    </script>
+
+    <!-- Load your data from the same repo -->
+    <script src="animation.js"></script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 100, 300);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+
+        let mixer, clock = new THREE.Clock();
+
+        if (typeof myBase64Animation !== 'undefined') {
+            // Decodes the base64 string from your animation.js file
+            const binaryString = atob(myBase64Animation.trim());
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            const loader = new FBXLoader();
+            const object = loader.parse(bytes.buffer, '');
+            
+            if (object.animations.length > 0) {
+                mixer = new THREE.AnimationMixer(object);
+                mixer.clipAction(object.animations[0]).play();
+            }
+            scene.add(object);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (mixer) mixer.update(clock.getDelta());
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
